@@ -2,8 +2,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/types.h>
+#include <errno.h>
+#include <sys/wait.h>
 
 #define N 1024 /* Max input buffer size for shell */
+extern int errno;
 
 void strstrip(char *s)
 {
@@ -25,14 +29,75 @@ void strstrip(char *s)
     return;
 }
 
+int execWrapper(char *command, char *args[], char *path)
+{
+    if (!path)
+        return -1;
+
+    if (strchr(command, '/') != NULL)
+    {
+        /* If the command contains a '/' it is assumed that the absolute path is provided... */
+        return execv(command, args);
+    }
+    char fullPath[N];
+    char *pathCopy = strdup(path); /* So that the original path is not changed (underlying malloc is called) */
+    char *dir = strtok(pathCopy, ":");
+
+    while (dir != NULL)
+    {
+        strcpy(fullPath, dir);
+        strcat(fullPath, "/");
+        strcat(fullPath, command);
+
+        if (execv(fullPath, args) == 0)
+        {
+            free(pathCopy);
+            return 0;
+        }
+        dir = strtok(NULL, ":");
+    }
+
+    free(pathCopy);
+    return -1;
+}
+
 int execute(char *input, char *path)
 {
+    char *args[N / 2 + 1]; /* To hold the command and the arguments...*/
 
-    /* To be implemented... */
+    int i = 0;
 
-    printf("%s %s\n", input, path);
+    char *token = strtok(input, " \t");
 
-    return -1;
+    while (token != NULL)
+    {
+        args[i++] = token;
+        token = strtok(NULL, " \t");
+    }
+
+    args[i] = NULL;
+
+    pid_t pid = fork();
+
+    if (pid == 0)
+    {
+        if (execWrapper(args[0], args, path) == -1)
+        {
+            perror("execute");
+            exit(errno);
+        }
+    }
+    else if (pid > 0)
+    {
+        wait(NULL);
+    }
+    else
+    {
+        perror("fork failed");
+        exit(errno);
+    }
+
+    return 0;
 }
 
 int main()
