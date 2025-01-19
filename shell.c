@@ -7,20 +7,39 @@
 
 int main()
 {
-    system("clear");
+    char input[N], prompt[N];
+    int userPrompt = 0;
+    char *eof;
 
-    char *input;
+    getcwd(prompt, N);
+    printf("%s$ ", prompt);
 
-    while (fgets(input, N, stdin)) /* Gracefully terminate shell with EOF */
+    while (eof = fgets(input, N, stdin)) /* Returns NULL when gets EOF */
     {
         input[strcspn(input, "\n")] = 0;
 
-        if (!strcmp(input, "exit")) /* Gracefully terminate shell with "exit" */
+        if (!strcmp(input, "exit"))
         {
             break;
         }
 
-        printf("%s\n", input);
+        printf("%s\n", input); /* Expected to write function to handle inputs here... */
+
+        if (userPrompt)
+        {
+            printf("%s$ ", prompt);
+        }
+        else
+        {
+            getcwd(prompt, N);
+            printf("%s$ ", prompt);
+        }
+    }
+
+    if (!eof)
+    {
+        printf("\n"); /* Just to mimic the behaviour of an actual shell */
+        /* return the prompt in both the cases on a new line... */
     }
 
     return 0;
