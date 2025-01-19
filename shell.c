@@ -25,11 +25,12 @@ void strstrip(char *s)
     return;
 }
 
-int execute(char * input) {
+int execute(char *input, char *path)
+{
 
-    char *path = getenv("PATH");
-    
     /* To be implemented... */
+
+    printf("%s %s\n", input, path);
 
     return -1;
 }
@@ -37,8 +38,9 @@ int execute(char * input) {
 int main()
 {
     char input[N], prompt[N];
-    int userPrompt = 0;
+    int userPrompt = 0; /* 1 - Use prompt given by user; 0 - Use default prompt (cwd) */
     char *eof;
+    char *path = getenv("PATH");
 
     getcwd(prompt, N);
     printf("%s$ ", prompt);
@@ -57,7 +59,7 @@ int main()
 
             if (strncmp(input, "PS1=\"", 5))
             {
-                printf("Usuage: PS1=\"whatever string you want\" or PS1=\"\\w$\" to restore default");
+                printf("Usuage: PS1=\"whatever string you want\" or PS1=\"\\w$\" to restore default\n");
             }
 
             else if (!strncmp(input + 5, "\\w$", 3))
@@ -70,13 +72,38 @@ int main()
                 int t = strcspn(temp, "\"");
                 if (t >= strlen(temp))
                 {
-                    printf("Usuage: PS1=\"whatever string you want\" or PS1=\"\\w$\" to restore default");
+                    printf("Usuage: PS1=\"whatever string you want\" or PS1=\"\\w$\" to restore default\n");
                 }
                 else
                 {
                     strcpy(prompt, temp);
                     userPrompt = 1;
                     prompt[t] = 0;
+                }
+            }
+        }
+
+        if (!strncmp(input, "PATH=", 5))
+        {
+
+            if (strncmp(input, "PATH=\"", 6) != 0)
+            {
+                printf("Usuage: PATH=\"paths/to/executables\"\n");
+            }
+
+            else
+            {
+                char temp[N];
+                strcpy(temp, input + 6);
+                int t = strcspn(temp, "\"");
+                if (t >= strlen(temp))
+                {
+                    printf("Usuage: PATH=\"paths/to/executables\"\n");
+                }
+                else
+                {
+                    strcpy(path, temp);
+                    path[t] = 0;
                 }
             }
         }
@@ -95,7 +122,7 @@ int main()
 
         else
         {
-            if (execute(input) == -1)
+            if (execute(input, path) == -1)
             {
                 perror("myshell");
             }
