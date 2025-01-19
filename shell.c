@@ -25,6 +25,15 @@ void strstrip(char *s)
     return;
 }
 
+int execute(char * input) {
+
+    char *path = getenv("PATH");
+    
+    /* To be implemented... */
+
+    return -1;
+}
+
 int main()
 {
     char input[N], prompt[N];
@@ -72,14 +81,24 @@ int main()
             }
         }
 
-        else if (!strncmp(input, "cd ", 3))
+        else if (!strncmp(input, "cd", 2))
         {
-            chdir(input + 3);
+            if (*(input + 2) == 0 && chdir(getenv("HOME")) == -1)
+            {
+                perror("cd");
+            }
+            else if (*(input + 2) == ' ' && chdir(input + 3) == -1)
+            {
+                perror("cd");
+            }
         }
 
         else
         {
-            printf("%s\n", input); /* Expected to write function to handle inputs here... */
+            if (execute(input) == -1)
+            {
+                perror("myshell");
+            }
         }
 
         if (userPrompt)
