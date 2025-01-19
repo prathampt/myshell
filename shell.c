@@ -19,12 +19,33 @@ void strstrip(char *s)
 
     while (end >= s && *end == ' ')
         end--;
-    *(end + 1) = '\0';
+    *(end + 1) = 0;
 
-    while (s[i] == ' ')
+    while (s[i] == ' ' || s[i] == '\t')
         i++;
-    while (s[j++] = s[i++])
-        ;
+
+    /* To remove the spaces in between the arguments, and make the input clean... */
+
+    int inSpace = 0;
+    while (s[i])
+    {
+        if (s[i] == ' ' || s[i] == '\t')
+        {
+            if (!inSpace)
+            {
+                s[j++] = ' ';
+                inSpace = 1;
+            }
+        }
+        else
+        {
+            s[j++] = s[i];
+            inSpace = 0;
+        }
+        i++;
+    }
+
+    s[j] = 0;
 
     return;
 }
