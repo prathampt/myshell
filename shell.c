@@ -5,6 +5,26 @@
 
 #define N 1024 /* Max input buffer size for shell */
 
+void strstrip(char *s)
+{
+    int size = strlen(s), i = 0, j = 0;
+    if (!size)
+        return;
+
+    char *end = s + size - 1;
+
+    while (end >= s && *end == ' ')
+        end--;
+    *(end + 1) = '\0';
+
+    while (s[i] == ' ')
+        i++;
+    while (s[j++] = s[i++])
+        ;
+
+    return;
+}
+
 int main()
 {
     char input[N], prompt[N];
@@ -18,10 +38,10 @@ int main()
     {
         input[strcspn(input, "\n")] = 0;
 
+        strstrip(input);
+
         if (!strcmp(input, "exit"))
-        {
             break;
-        }
 
         if (!strncmp(input, "PS1=", 4))
         {
@@ -30,10 +50,10 @@ int main()
             {
                 printf("Usuage: PS1=\"whatever string you want\" or PS1=\"\\w$\" to restore default");
             }
+
             else if (!strncmp(input + 5, "\\w$", 3))
-            {
                 userPrompt = 0;
-            }
+
             else
             {
                 char temp[N];
