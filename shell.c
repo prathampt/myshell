@@ -23,11 +23,24 @@ int main()
             break;
         }
 
+        if (!strncmp(input, "PS1=", 4))
+        {
+            if (!strncmp(input + 5, "\\w$", 3)) {
+                userPrompt = 0;
+            }
+            else {
+                userPrompt = 1;
+                strcpy(prompt, input + 5);
+                prompt[strcspn(prompt, "\"")] = 0;
+            }
+
+        }
+
         printf("%s\n", input); /* Expected to write function to handle inputs here... */
 
         if (userPrompt)
         {
-            printf("%s$ ", prompt);
+            printf("%s ", prompt);
         }
         else
         {
