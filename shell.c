@@ -25,13 +25,26 @@ int main()
 
         if (!strncmp(input, "PS1=", 4))
         {
-            if (!strncmp(input + 5, "\\w$", 3)) {
+
+            if (strncmp(input, "PS1=\"", 5)) {
+                printf("Usuage: PS1=\"whatever string you want\" or PS1=\"\\w$\" to restore default");
+            }
+            else if (!strncmp(input + 5, "\\w$", 3)) {
                 userPrompt = 0;
             }
             else {
-                userPrompt = 1;
-                strcpy(prompt, input + 5);
-                prompt[strcspn(prompt, "\"")] = 0;
+                char temp[N];
+                strcpy(temp, input + 5);
+                int t = strcspn(temp, "\"");
+                if (t >= strlen(temp)) {
+                    printf("Usuage: PS1=\"whatever string you want\" or PS1=\"\\w$\" to restore default");
+                }
+                else {
+                    strcpy(prompt, temp);
+                    userPrompt = 1;
+                    prompt[t] = 0;
+                }
+                
             }
 
         }
