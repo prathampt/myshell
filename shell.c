@@ -87,7 +87,7 @@ char **parse(char *input)
             }
             else
             {
-                fprintf(stderr, "Error: Unmatched quote\n");
+                fprintf(stderr, "\033[0;31mError: Unmatched quote\033[0m\n");
                 return NULL;
             }
         }
@@ -197,7 +197,7 @@ int main()
     char *path = getenv("PATH");
 
     getcwd(prompt, N);
-    printf("%s$ ", prompt);
+    printf("\033[1;36m%s\033[1;37m$\033[0m ", prompt);
 
     while (eof = fgets(input, N, stdin)) /* Returns NULL when gets EOF */
     {
@@ -213,7 +213,7 @@ int main()
 
             if (strncmp(input, "PS1=\"", 5))
             {
-                printf("Usuage: PS1=\"whatever string you want\" or PS1=\"\\w$\" to restore default\n");
+                printf("\033[0;31mUsuage:\033[0m PS1=\"whatever string you want\" or PS1=\"\\w$\" to restore default\n");
             }
 
             else if (!strncmp(input + 5, "\\w$", 3))
@@ -226,7 +226,7 @@ int main()
                 int t = strcspn(temp, "\"");
                 if (t >= strlen(temp))
                 {
-                    printf("Usuage: PS1=\"whatever string you want\" or PS1=\"\\w$\" to restore default\n");
+                    printf("\033[0;31mUsuage:\033[0m PS1=\"whatever string you want\" or PS1=\"\\w$\" to restore default\n");
                 }
                 else
                 {
@@ -242,7 +242,7 @@ int main()
 
             if (strncmp(input, "PATH=\"", 6) != 0)
             {
-                printf("Usuage: PATH=\"paths/to/executables\"\n");
+                printf("\033[0;31mUsuage:\033[0m PATH=\"paths/to/executables\"\n");
             }
 
             else
@@ -252,7 +252,7 @@ int main()
                 int t = strcspn(temp, "\"");
                 if (t >= strlen(temp))
                 {
-                    printf("Usuage: PATH=\"paths/to/executables\"\n");
+                    printf("\033[0;31mUsuage:\033[0m PATH=\"paths/to/executables\"\n");
                 }
                 else
                 {
@@ -296,12 +296,12 @@ int main()
 
         if (userPrompt)
         {
-            printf("%s ", prompt);
+            printf("\033[1;32m%s\033[0m ", prompt);
         }
         else
         {
             getcwd(prompt, N);
-            printf("%s$ ", prompt);
+            printf("\033[1;36m%s\033[1;37m$\033[0m ", prompt);
         }
     }
 
