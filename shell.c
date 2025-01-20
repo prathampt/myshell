@@ -237,7 +237,7 @@ int main()
             }
         }
 
-        if (!strncmp(input, "PATH=", 5))
+        else if (!strncmp(input, "PATH=", 5))
         {
 
             if (strncmp(input, "PATH=\"", 6) != 0)
