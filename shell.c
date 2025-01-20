@@ -50,6 +50,85 @@ void strstrip(char *s)
     return;
 }
 
+char **parse(char *input)
+{
+    char **args = (char **)malloc((N / 2 + 1) * sizeof(char *)); /* To hold the command and the arguments...*/
+    int i = 0;
+    char *token = input;
+
+    while (token && *token != '\0')
+    {
+        while (*token == ' ' || *token == '\t')
+        {
+            token++;
+        }
+
+        if (*token == '\0')
+        {
+            break;
+        }
+
+        if (*token == '"' || *token == '\'')
+        {
+            char quoteType = *token;
+            token++;
+            char *start = token;
+
+            while (*token && *token != quoteType)
+            {
+                token++;
+            }
+
+            if (*token == quoteType)
+            {
+                *token = '\0';
+                args[i++] = strdup(start);
+                token++;
+            }
+            else
+            {
+                fprintf(stderr, "Error: Unmatched quote\n");
+                return NULL;
+            }
+        }
+        else
+        {
+            char *start = token;
+
+            while (*token && *token != ' ' && *token != '\t')
+            {
+                token++;
+            }
+
+            if (*token)
+            {
+                *token = '\0';
+                token++;
+            }
+
+            if (*start == '~')
+            {
+                char *newString = (char *)malloc((strlen(start) + strlen(getenv("HOME")) + 1) * sizeof(char));
+                if (newString)
+                {
+                    strcpy(newString, getenv("HOME"));
+                    strcat(newString, "/");
+                    strcat(newString, start + 1);
+                    args[i++] = newString;
+                }
+            }
+            else
+            {
+                args[i++] = strdup(start);
+            }
+        }
+    }
+
+    args[i] = NULL;
+
+    return args;
+}
+
 int execWrapper(char *command, char *args[], char *path)
 {
     if (!path)
@@ -85,33 +164,7 @@ int execWrapper(char *command, char *args[], char *path)
 
 int execute(char *input, char *path)
 {
-    char *args[N / 2 + 1]; /* To hold the command and the arguments...*/
-
-    int i = 0;
-
-    char *token = strtok(input, " \t");
-
-    while (token != NULL)
-    {
-        if (*token == '~')
-        {
-            char *newString = (char *)malloc((strlen(token) + strlen(getenv("HOME")) + 1) * sizeof(char));
-            if (newString)
-            {
-                strcpy(newString, getenv("HOME"));
-                strcat(newString, "/");
-                strcat(newString, token + 1);
-                args[i++] = newString;
-                token = strtok(NULL, " \t");
-                continue;
-            }
-        }
-
-        args[i++] = token;
-        token = strtok(NULL, " \t");
-    }
-
-    args[i] = NULL;
+    char **args = parse(input);
 
     pid_t pid = fork();
 
@@ -211,13 +264,25 @@ int main()
 
         else if (!strncmp(input, "cd", 2))
         {
-            if (*(input + 2) == 0 && chdir(getenv("HOME")) == -1)
+            if (*(input + 2) == 0)
             {
-                perror("cd");
+                if (chdir(getenv("HOME")) == -1)
+                    perror("cd");
             }
-            else if (*(input + 2) == ' ' && chdir(input + 3) == -1)
+            else if (*(input + 2) == ' ' && *(input + 3) == '~')
             {
-                perror("cd");
+                if (chdir(getenv("HOME")) == -1)
+                    perror("cd");
+                if (*(input + 4) && *(input + 4) == '/')
+                {
+                    if (*(input + 5) && chdir(input + 5) == -1)
+                        perror("cd");
+                }
+            }
+            else if (*(input + 2) == ' ')
+            {
+                if (chdir(input + 3) == -1)
+                    perror("cd");
             }
         }
 
