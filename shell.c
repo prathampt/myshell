@@ -79,6 +79,7 @@ int execWrapper(char *command, char *args[], char *path)
     }
 
     free(pathCopy);
+    errno = ENOENT;
     return -1;
 }
 
@@ -92,6 +93,20 @@ int execute(char *input, char *path)
 
     while (token != NULL)
     {
+        if (*token == '~')
+        {
+            char *newString = (char *)malloc((strlen(token) + strlen(getenv("HOME")) + 1) * sizeof(char));
+            if (newString)
+            {
+                strcpy(newString, getenv("HOME"));
+                strcat(newString, "/");
+                strcat(newString, token + 1);
+                args[i++] = newString;
+                token = strtok(NULL, " \t");
+                continue;
+            }
+        }
+
         args[i++] = token;
         token = strtok(NULL, " \t");
     }
