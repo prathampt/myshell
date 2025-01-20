@@ -208,7 +208,14 @@ int main()
         if (!strcmp(input, "exit"))
             break;
 
-        if (!strncmp(input, "PS1=", 4))
+        if (!strncmp(input, "pwd", 3))
+        {
+            char cwd[N];
+            getcwd(cwd, N);
+            printf("%s\n", cwd);
+        }
+
+        else if (!strncmp(input, "PS1=", 4))
         {
 
             if (strncmp(input, "PS1=\"", 5))
