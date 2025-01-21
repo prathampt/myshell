@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 
 #define N 1024 /* Max input buffer size for shell */
 extern int errno;
@@ -17,7 +18,7 @@ void strstrip(char *s)
 
     char *end = s + size - 1;
 
-    while (end >= s && *end == ' ')
+    while (end >= s && (*end == ' ' || *end == '\t'))
         end--;
     *(end + 1) = 0;
 
@@ -129,6 +130,85 @@ char **parse(char *input)
     return args;
 }
 
+int setRedirection(char *input, int *redirect0, int *redirect1, int *redirect2, int *outputInAppendMode, char *in, char *out, char *err)
+{
+    int i = 0;
+    *redirect0 = 0, *redirect1 = 0, *redirect2 = 0, *outputInAppendMode = 0;
+    in[0] = 0, out[0] = 0, err[0] = 0;
+
+    while (input[i])
+    {
+        if ((input[i] == '&' && input[i + 1] && input[i + 1] == '>') || (input[i] == '>' && input[i + 1] && input[i + 1] == '&'))
+        {
+            *redirect2 = 1;
+            *redirect1 = 1;
+            input[i++] = ' ';
+            input[i++] = ' ';
+            if (input[i] == ' ')
+                i++;
+            int j = 0;
+            while (input[i] && input[i] != ' ')
+            {
+                err[j++] = input[i];
+                input[i++] = ' ';
+            }
+            err[j] = 0;
+            strcpy(out, err);
+        }
+        if (input[i] == '<')
+        {
+            *redirect0 = 1;
+            input[i++] = ' ';
+            if (input[i] == ' ')
+                i++;
+            int j = 0;
+            while (input[i] && input[i] != ' ')
+            {
+                in[j++] = input[i];
+                input[i++] = ' ';
+            }
+            in[j] = 0;
+        }
+        if (input[i] == '>')
+        {
+            *redirect1 = 1;
+            input[i++] = ' ';
+            if (input[i] == '>')
+            {
+                *outputInAppendMode = 1;
+                input[i++] = ' ';
+            }
+            if (input[i] == ' ')
+                i++;
+            int j = 0;
+            while (input[i] && input[i] != ' ')
+            {
+                out[j++] = input[i];
+                input[i++] = ' ';
+            }
+            out[j] = 0;
+        }
+        if (input[i] == '2' && input[i + 1] && input[i + 1] == '>')
+        {
+            *redirect2 = 1;
+            input[i++] = ' ';
+            input[i++] = ' ';
+            if (input[i] == ' ')
+                i++;
+            int j = 0;
+            while (input[i] && input[i] != ' ')
+            {
+                err[j++] = input[i];
+                input[i++] = ' ';
+            }
+            err[j] = 0;
+        }
+        i++;
+    }
+
+    return 0;
+}
+
 int execWrapper(char *command, char *args[], char *path)
 {
     if (!path)
@@ -162,7 +242,7 @@ int execWrapper(char *command, char *args[], char *path)
     return -1;
 }
 
-int execute(char *input, char *path)
+int execute(char *input, char *path, int redirect0, int redirect1, int redirect2, int outputInAppendMode, char *in, char *out, char *err)
 {
     char **args = parse(input);
 
@@ -170,6 +250,45 @@ int execute(char *input, char *path)
 
     if (pid == 0)
     {
+        if (redirect0)
+        {
+            close(0);
+            if (open(in, O_RDONLY) == -1)
+            {
+                perror("");
+                return -1;
+            }
+        }
+
+        if (outputInAppendMode && redirect1)
+        {
+            close(1);
+            if (open(out, O_WRONLY | O_APPEND | O_CREAT, 0644) == -1)
+            {
+                perror("");
+                return -1;
+            }
+        }
+        else if (redirect1)
+        {
+            close(1);
+            if (open(out, O_WRONLY | O_CREAT, 0644) == -1)
+            {
+                perror("");
+                return -1;
+            }
+        }
+
+        if (redirect2)
+        {
+            close(2);
+            if (open(err, O_WRONLY | O_CREAT, 0644) == -1)
+            {
+                perror("");
+                return -1;
+            }
+        }
+
         if (execWrapper(args[0], args, path) == -1)
         {
             perror("execute");
@@ -195,6 +314,11 @@ int main()
     int userPrompt = 0; /* 1 - Use prompt given by user; 0 - Use default prompt (cwd) */
     char *eof;
     char *path = getenv("PATH");
+    int redirect0 = 0, redirect1 = 0, redirect2 = 0, outputInAppendMode = 0;
+    char *in, *out, *err;
+    in = (char *)malloc(N * sizeof(char));
+    out = (char *)malloc(N * sizeof(char));
+    err = (char *)malloc(N * sizeof(char));
 
     getcwd(prompt, N);
     printf("\033[1;36m%s\033[1;37m$\033[0m ", prompt);
@@ -204,16 +328,12 @@ int main()
         input[strcspn(input, "\n")] = 0;
 
         strstrip(input);
+        setRedirection(input, &redirect0, &redirect1, &redirect2, &outputInAppendMode, in, out, err); /* This function is going to modify the input and set redirection related flags */
+        /* printf("0: %d 1: %d 2: %d Append: %d In: %s Out: %s Err: %s\n", redirect0, redirect1, redirect2, outputInAppendMode, in, out, err); */
+        strstrip(input);
 
         if (!strcmp(input, "exit"))
             break;
-
-        if (!strncmp(input, "pwd", 3))
-        {
-            char cwd[N];
-            getcwd(cwd, N);
-            printf("%s\n", cwd);
-        }
 
         else if (!strncmp(input, "PS1=", 4))
         {
@@ -295,7 +415,7 @@ int main()
 
         else
         {
-            if (execute(input, path) == -1)
+            if (execute(input, path, redirect0, redirect1, redirect2, outputInAppendMode, in, out, err) == -1)
             {
                 perror("myshell");
             }
