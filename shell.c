@@ -328,9 +328,6 @@ int main()
         input[strcspn(input, "\n")] = 0;
 
         strstrip(input);
-        setRedirection(input, &redirect0, &redirect1, &redirect2, &outputInAppendMode, in, out, err); /* This function is going to modify the input and set redirection related flags */
-        /* printf("0: %d 1: %d 2: %d Append: %d In: %s Out: %s Err: %s\n", redirect0, redirect1, redirect2, outputInAppendMode, in, out, err); */
-        strstrip(input);
 
         if (!strcmp(input, "exit"))
             break;
@@ -415,6 +412,8 @@ int main()
 
         else
         {
+            setRedirection(input, &redirect0, &redirect1, &redirect2, &outputInAppendMode, in, out, err); /* This function is going to modify the input and set redirection related flags */
+            strstrip(input);
             if (execute(input, path, redirect0, redirect1, redirect2, outputInAppendMode, in, out, err) == -1)
             {
                 perror("myshell");
